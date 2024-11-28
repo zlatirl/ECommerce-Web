@@ -17,25 +17,22 @@ app.use(session({
     saveUninitialized: true
 }));
 
-// SQL Database Connection
-const db = mysql.createConnection({
-    host: 'localhost',
-    user: 'root',
-    password: 'your_password',
-    database: 'ecommerce_db'
-});
+// // SQL Database Connection
+// const db = mysql.createConnection({
+//     host: 'localhost',
+//     user: 'root',
+//     password: 'root',
+//     database: 'ecommerce_db'
+// });
 
-db.connect((err) => {
-    if (err) throw err;
-    console.log('Connected to Database');
-});
+// db.connect((err) => {
+//     if (err) throw err;
+//     console.log('Connected to Database');
+// });
 
 // Routes
 app.use('/', require('./routes/main'));
 app.use('/auth', require('./routes/auth'));
-
-// Define our data
-var webData = { webName: "Ecommerce Web" };
 
 // Start the web app listening
 app.listen(PORT, () => {

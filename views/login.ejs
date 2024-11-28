@@ -1,8 +1,26 @@
-<%- include('partials/header') %>
-<h2>Login</h2>
-<form action="/auth/login" method="POST">
-    <input type="text" name="username" placeholder="Username" required>
-    <input type="password" name="password" placeholder="Password" required>
-    <button type="submit">Login</button>
-</form>
-<%- include('partials/footer') %>
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Home - <%= webData.webName %></title>
+    <link rel="stylesheet" href="/css/styles.css">
+</head>
+
+<body>
+    <%- include('partials/header') %>
+
+    <div class = "container">
+        <h2>Login</h2>
+        <form action="/auth/login" method="POST">
+            <input type="text" name="username" placeholder="Username" required>
+            <input type="password" name="password" placeholder="Password" required>
+            <button type="submit">Login</button>
+        </form>
+        <%- include('partials/footer') %>
+    </div>
+
+    <%- include('partials/footer') %>
+</body>
+</html>

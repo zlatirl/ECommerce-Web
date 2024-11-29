@@ -34,12 +34,24 @@ db.connect((err) => {
     }
 });
 
+// Middleware to check if the user is logged in
+app.use((req, res, next) => {
+    res.locals.user = req.session.user || null; // Pass the user to the views
+    next();
+});
+
 // Global Variables
 const webData = { webName: "eCommerce Web" };
 
 // Routes
 app.use('/', require('./routes/main')(app, webData));
 app.use('/auth', require('./routes/auth')(app, webData, db));
+app.use(express.static('public'));
+
+// 404 - Page Not Found
+app.use((req, res) => {
+    res.status(404).render('404', { webData });
+});
 
 // Start the web app listening
 app.listen(PORT, () => {

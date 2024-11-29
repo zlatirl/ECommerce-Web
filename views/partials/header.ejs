@@ -2,6 +2,16 @@
     <nav>
         <a href="/">Home</a>
         <a href="/about">About</a>
+
+        <!-- Show Login and Register if user is not logged in -->
+        <% if (!user) { %>
+            <a href="/auth/login">Login</a>
+            <a href="/auth/register">Register</a>
+        <% } else { %>
+            <!-- Show Logout if user is logged in -->
+            <a href="/auth/logout">Logout</a>
+            <span>Welcome, <%= user.username %></span>
+        <% } %>
     </nav>
 </header>
 <hr>

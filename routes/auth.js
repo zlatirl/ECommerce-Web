@@ -105,6 +105,10 @@ module.exports = (app, webData, db) => {
 
     // Logout Route - Destroy the session and redirect to the login page
     router.get('/logout', (req, res) => {
+        if (req.session.user) {
+            console.log(`User ${req.session.user.username} has logged out.`); // Log the user logout
+        }
+
         req.session.destroy((err) => {
             if (err) {
                 console.error('Error destroying session:', err);

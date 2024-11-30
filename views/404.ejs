@@ -1,23 +1,21 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>  
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Home - <%= webData.webName %></title>
+        <link rel="stylesheet" href="/css/styles.css">
+    </head>
 
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Home - <%= webData.webName %></title>
-    <link rel="stylesheet" href="/css/styles.css">
-</head>
+    <body>
+        <%- include('partials/header') %>
+        
+        <div class="container">
+            <h2>404 - Page Not Found</h2>
+            <p>Sorry, the page you are looking for does not exist.</p>
+            <a href="/">Return to Home</a>
+        </div>
 
-<body>
-    <%- include('partials/header') %>
-    
-    <div class="container">
-        <h2>404 - Page Not Found</h2>
-        <p>Sorry, the page you are looking for does not exist.</p>
-        <a href="/">Return to Home</a>
-    </div>
-
-    <%- include('partials/footer') %>
-</body>
-
+        <%- include('partials/footer') %>
+    </body>
 </html>

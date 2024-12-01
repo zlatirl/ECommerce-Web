@@ -1,3 +1,36 @@
 <!DOCTYPE html>
 <html>
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>About - <%= webData.webName %></title>
+        <link rel="stylesheet" href="/css/styles.css">
+    </head>
 
+    <body>
+        <%- include('partials/header') %>
+        
+        <div class="container">
+            <h1>About <%= webData.webName %></h1>
+            <p>Your destination for all your shopping needs. We're committed to bringing you the best selection of products and a good shopping experience.</p>
+
+            <h2>What Do We Offer?</h2>
+            <ul>
+                <li>Quality products</li>
+                <li>Great prices</li>
+                <li>Fast shipping</li>
+                <li>Secure Payments</li>
+            </ul>
+
+            <h2>Our Mission</h2>
+            <p>Our mission is to provide a convenient and reliable shopping experience for our customers. We aim to offer a wide range of products at competitive prices, with excellent customer service and fast delivery.</p>
+
+            <h2>Contact Us</h2>
+            <p>If you have any questions or concerns, please feel free to contact us at <a href="mailto:info@<%= webData.webName %>">info@<%= webData.webName %></a>.</p> <!-- Dummy email -->
+
+            <p>Thank you for choosing <%= webData.webName %>!</p>
+        </div>
+
+        <%- include('partials/footer') %>
+    </body>
+</html>

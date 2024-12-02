@@ -12,6 +12,12 @@
             <a href="/auth/logout">Logout</a>
             <span>Welcome, <%= user.username %></span>
         <% } %>
+
+        <!-- Search Bar -->
+        <form action="/search" method="GET">
+            <input type="text" name="query" placeholder="Search for products..." required>
+            <button type="submit">Search</button>
+        </form>
     </nav>
 </header>
 <hr>

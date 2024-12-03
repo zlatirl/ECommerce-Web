@@ -1,5 +1,6 @@
 const express = require('express');
 const bcrypt = require('bcryptjs');
+const axios = require('axios');
 
 module.exports = (app, webData, db) => {
     const router = express.Router();
@@ -11,47 +12,57 @@ module.exports = (app, webData, db) => {
 
     // Register Page - Handle user registration
     router.post('/register', async (req, res) => {
-        const { username, password } = req.body;
-
-        // Check if the username is already taken
-        db.query('SELECT * FROM users WHERE username = ?', [username], async (err, results) => {
-            if (err) {
-                console.error('Error checking for existing username:', err);
-                return res.status(500).send('Internal Server Error');
+        const { username, password, 'h-captcha-response': hCaptchaToken } = req.body;
+    
+        const secretKey = 'YOUR_HCAPTCHA';
+    
+        try {
+            const response = await axios.post('https://hcaptcha.com/siteverify', null, {
+                params: {
+                    secret: secretKey,
+                    response: hCaptchaToken
+                }
+            });
+    
+            if (!response.data.success) {
+                return res.render('register', { webData, error: 'Failed to verify hCaptcha.' });
             }
-
-            if (results.length > 0) {
-                // If the username is already taken, render the register page with an error message
-                return res.render('register', { webData, error: 'Username is already taken.' });
-            }
-
-            try {
-                // Hash the password
-                const hashedPassword = await bcrypt.hash(password, 10);
-
-                // Insert user into the database
-                db.query(
-                    'INSERT INTO users (username, password) VALUES (?, ?)',
-                    [username, hashedPassword],
-                    (err, results) => {
-                        if (err) {
-                            console.error('Error inserting user:', err);
-                            return res.status(500).send('Internal Server Error');
+    
+            db.query('SELECT * FROM users WHERE username = ?', [username], async (err, results) => {
+                if (err) {
+                    console.error('Error checking for existing username:', err);
+                    return res.status(500).send('Internal Server Error');
+                }
+    
+                if (results.length > 0) {
+                    return res.render('register', { webData, error: 'Username is already taken.' });
+                }
+    
+                try {
+                    const hashedPassword = await bcrypt.hash(password, 10);
+    
+                    db.query(
+                        'INSERT INTO users (username, password) VALUES (?, ?)',
+                        [username, hashedPassword],
+                        (err, results) => {
+                            if (err) {
+                                console.error('Error inserting user:', err);
+                                return res.status(500).send('Internal Server Error');
+                            }
+    
+                            console.log(`User ${username} has registered successfully.`);
+                            res.redirect('/auth/login');
                         }
-
-                        // Log the successful registration
-                        console.log(`User ${username} has registered successfully.`);
-
-                        // Redirect to the login page
-                        res.redirect('/auth/login');
-                    }
-                );
-            } catch (err) {
-                console.error('Error hashing password:', err);
-                res.status(500).send('Internal Server Error');
-            }
-        });
-
+                    );
+                } catch (err) {
+                    console.error('Error hashing password:', err);
+                    res.status(500).send('Internal Server Error');
+                }
+            });
+        } catch (err) {
+            console.error('Error verifying hCaptcha:', err);
+            res.status(500).send('Internal Server Error');
+        }
     });
 
     // Login Page - Render the login page

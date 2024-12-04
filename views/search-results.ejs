@@ -19,7 +19,14 @@
                         <li>
                             <h2><%= product.name %></h2>
                             <p><%= product.description %></p>
-                            <p>Price: $<%= product.price.toFixed(2) %></p>
+                            <p>Price: £<%= product.price.toFixed(2) %></p>
+
+                            <!-- Add to Basket -->
+                            <form action="/basket/add" method="POST">
+                                <input type="hidden" name="productId" value="<%= product.id %>">
+                                <input type="number" name="quantity" value="1" min="1" required>
+                                <button type="submit">Add to Basket</button>
+                            </form>
                         </li>
                     <% }); %>
                 </ul>

@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Your Basket</title>
+        <link rel="stylesheet" href="/css/styles.css">
+    </head>
+
+    <body>
+        <%- include('partials/header') %>
+        
+        <div class="container">
+            <h1>Your Basket</h1>
+            
+            <% if (basketItems.length > 0) { %> <!-- Check if basket has items -->
+                <ul>
+                    <% basketItems.forEach(item => { %>
+                        <li>
+                            <h2><%= item.name %></h2>
+                            <p>Quantity: <%= item.quantity %></p>
+                            <p>Price (Each): £<%= item.price ? item.price.toFixed(2) : '0.00' %></p>
+                            <p>Total for Item: £<%= item.price ? (item.price * item.quantity).toFixed(2) : '0.00' %></p>
+                        </li>
+                    <% }); %>
+                </ul>
+                <h2>Total: £<%= basketTotal.toFixed(2) %></h2>                               
+            <% } else { %>
+                <p>Your basket is empty.</p> <!-- If basket is empty -->
+            <% } %>
+        </div>
+
+        <%- include('partials/footer') %>
+    </body>
+</html>

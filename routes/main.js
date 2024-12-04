@@ -123,7 +123,6 @@ module.exports = (app, webData, db) => {
                         });
                     }
     
-                    console.log('Guest basket:', req.session.guestBasket); // Debugging log
                     res.redirect('/basket'); // Redirect to the basket page
                 }
             );

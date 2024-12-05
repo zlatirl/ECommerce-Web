@@ -76,7 +76,7 @@ module.exports = (app, webData, db) => {
 
         try {
             // Fetch the user from the database
-            const [user] = await new Promise((resolve, reject) => {
+            const results = await new Promise((resolve, reject) => {
                 db.query('SELECT * FROM users WHERE username = ?', [username], (err, results) => {
                     if (err) reject(err);
                     resolve(results);
@@ -84,9 +84,11 @@ module.exports = (app, webData, db) => {
             });
 
             // Handle invalid username
-            if (!user) {
+            if (results.length === 0) {
                 return res.render('login', { webData, error: 'Invalid username or password.' });
             }
+
+            const user = results[0];
 
             // Compare the hashed password
             const isMatch = await bcrypt.compare(password, user.password);
@@ -127,7 +129,7 @@ module.exports = (app, webData, db) => {
             }
 
             // Redirect to the basket page
-            res.redirect('/basket');
+            res.redirect('/');
         } catch (err) {
             console.error('Error during login:', err);
             res.status(500).send('Internal Server Error');

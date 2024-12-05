@@ -1,24 +1,48 @@
 <header>
-    <nav>
-        <a href="/">Home</a>
-        <a href="/about">About</a>
-        <a href="/basket">Basket</a>
-        
-        <!-- Show Login and Register if user is not logged in -->
-        <% if (!user) { %>
-            <a href="/auth/login">Login</a>
-            <a href="/auth/register">Register</a>
-        <% } else { %>
-            <!-- Show Logout if user is logged in -->
-            <a href="/auth/logout">Logout</a>
-            <span>Welcome, <%= user.username %></span>
-        <% } %>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+        <div class="container-fluid">
+            <!-- Home Page -->
+            <a class="navbar-brand" href="/">eCommerce Web</a>
+            
+            <!-- Delivery Information To Be Added -->
 
-        <!-- Search Bar -->
-        <form action="/search" method="GET">
-            <input type="text" name="query" placeholder="Search for products..." required>
-            <button type="submit">Search</button>
-        </form>
+            <!-- Search Bar -->
+            <form class="d-flex flex-grow-1 mx-4" action="/search" method="GET">
+                <input class="form-control me-2" type="search" name="query" placeholder="Search eCommerce-Web" aria-label="Search" required>
+                <button class="btn btn-warning" type="submit"><i class="bi bi-search"></i></button>
+            </form>
+
+            <!-- Login Button -->
+            <ul class="navbar-nav ms-3">
+                <% if (!user) { %>
+                    <!-- Show Login/Signup Dropdown for Guests -->
+                    <li class="nav-item" dropdown>
+                    <a class="nav-link dropdown-toggle" href="#" id="loginDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                        Login
+                    </a>
+                    <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="loginDropdown">
+                        <li><a class="dropdown-item" href="/auth/login">Sign in</a></li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li><a class="dropdown-item" href="/auth/register">Create an account</a></li>
+                    </ul>
+                <% } else { %>
+                    <!-- Show Logout if user is logged in -->
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="accountDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                            Hello, <%= user.username %>
+                        </a>
+                        <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="accountDropdown">
+                            <li><a class="dropdown-item" href="/auth/myaccount">My Account</a></li>
+                            <li><a class="dropdown-item" href="/auth/logout">Logout</a></li>
+                        </ul>
+                    </li>
+                <% } %>
+                
+                <!-- Basket -->
+                <li class="nav-item">
+                    <a class="nav-link text-white" href="/basket">Basket</a>
+                </li>
+            </ul>
+        </div>
     </nav>
 </header>
-<hr>

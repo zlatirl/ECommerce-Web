@@ -5,7 +5,19 @@ module.exports = (app, webData, db) => {
 
     // Home Page
     router.get('/', (req, res) => {
-        res.render('index', { webData });
+        db.query('SELECT * FROM products', (err, results) => {
+            if (err) {
+                console.error('Error fetching products:', err);
+                return res.status(500).send('Internal Server Error');
+            }
+
+            const products = results.map(product => ({
+                ...product,
+                price: parseFloat(product.price),
+            }));
+
+            res.render('index', { webData, products });
+        });
     });
 
     // About Page

@@ -17,14 +17,38 @@
                 <ul>
                     <% basketItems.forEach(item => { %>
                         <li>
-                            <h2><%= item.name %></h2>
-                            <p>Quantity: <%= item.quantity %></p>
+                            <!-- Link to product page -->
+                            <a href="/product/<%= item.productId %>">
+                                <h2><%= item.name %></h2>
+                            </a>
                             <p>Price (Each): £<%= item.price ? item.price.toFixed(2) : '0.00' %></p>
                             <p>Total for Item: £<%= item.price ? (item.price * item.quantity).toFixed(2) : '0.00' %></p>
+
+                            <!-- Quantity Controls -->
+                            <form action="/basket/update" method="POST">
+                                <input type="hidden" name="productId" value="<%= item.productId %>">
+                                <button type="submit" name="action" value="decrease">-</button>
+                            </form>
+                            <span>Quantity: <%= item.quantity %></span>
+                            <form action="/basket/update" method="POST">
+                                <input type="hidden" name="productId" value="<%= item.productId %>">
+                                <button type="submit" name="action" value="increase">+</button>
+                            </form>
+
+                            <!-- Remove Item -->
+                            <form action="/basket/remove" method="POST">
+                                <input type="hidden" name="productId" value="<%= item.productId %>">
+                                <button type="submit">Remove</button>
+                            </form>
                         </li>
                     <% }); %>
                 </ul>
-                <h2>Total: £<%= basketTotal.toFixed(2) %></h2>                               
+                <h2>Total: £<%= basketTotal.toFixed(2) %></h2>
+                
+                <!-- Checkout Button -->
+                <form action="/checkout" method="POST">
+                    <button type="submit">Checkout</button>
+                </form>
             <% } else { %>
                 <p>Your basket is empty.</p> <!-- If basket is empty -->
             <% } %>

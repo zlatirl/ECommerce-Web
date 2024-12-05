@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en">
+
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title><%= product.name %> - Details</title>
+        <link rel="stylesheet" href="/css/styles.css">
+    </head>
+
+    <body>
+        <%- include('partials/header') %>
+
+        <div class="container">
+            <h1><%= product.name %></h1>
+            <p><strong>Price:</strong> £<%= product.price.toFixed(2) %></p>
+            <p><strong>Description:</strong> <%= product.description %></p>
+
+            <!-- Add to Basket Form -->
+            <form action="/basket/add" method="POST">
+                <input type="hidden" name="productId" value="<%= product.id %>">
+                <label for="quantity">Quantity:</label>
+                <input type="number" name="quantity" id="quantity" value="1" min="1" required>
+                <button type="submit">Add to Basket</button>
+            </form>
+        </div>
+
+        <%- include('partials/footer') %>
+    </body>
+</html>

@@ -71,64 +71,67 @@ module.exports = (app, webData, db) => {
     });
 
     // Login Page - Handle user login
-    router.post('/login', (req, res) => {
+    router.post('/login', async (req, res) => {
         const { username, password } = req.body;
-    
-        // Check if the username exists in the database
-        db.query('SELECT * FROM users WHERE username = ?', [username], async (err, results) => {
-            if (err) {
-                console.error('Error checking for existing username:', err);
-                return res.status(500).send('Internal Server Error');
-            }
-    
-            if (results.length === 0) {
-                // If the username does not exist, render the login page with an error message
+
+        try {
+            // Fetch the user from the database
+            const [user] = await new Promise((resolve, reject) => {
+                db.query('SELECT * FROM users WHERE username = ?', [username], (err, results) => {
+                    if (err) reject(err);
+                    resolve(results);
+                });
+            });
+
+            // Handle invalid username
+            if (!user) {
                 return res.render('login', { webData, error: 'Invalid username or password.' });
             }
-    
-            const user = results[0]; // Get the first user from the results
-    
-            try {
-                // Compare the hashed password with the one provided
-                const isMatch = await bcrypt.compare(password, user.password);
-    
-                if (!isMatch) {
-                    // Incorrect password
-                    return res.render('login', { webData, error: 'Invalid username or password.' });
-                }
-    
-                // Create a session and store user details
-                req.session.user = {
-                    id: user.id,
-                    username: user.username
-                };
-    
-                console.log(`User ${username} has logged in successfully.`);
-    
-                // Merge guest basket into the user's basket
-                const guestBasket = req.session.guestBasket || []; // Get the guest basket from session
-                guestBasket.forEach(item => {
-                    db.query(
-                        'INSERT INTO basket (user_id, product_id, quantity) VALUES (?, ?, ?) ON DUPLICATE KEY UPDATE quantity = quantity + ?',
-                        [user.id, item.productId, item.quantity, item.quantity],
-                        (err) => {
-                            if (err) {
-                                console.error('Error merging basket:', err);
-                            }
-                        }
-                    );
-                });
-    
-                // Clear the guest basket from the session
-                req.session.guestBasket = [];
-    
-                // Redirect to the basket page
-                res.redirect('/basket');
-            } catch (err) {
-                console.error('Error comparing passwords:', err);
-                res.status(500).send('Internal Server Error');
+
+            // Compare the hashed password
+            const isMatch = await bcrypt.compare(password, user.password);
+            if (!isMatch) {
+                return res.render('login', { webData, error: 'Invalid username or password.' });
             }
-        });
+
+            // Create a session for the logged-in user
+            req.session.user = { id: user.id, username: user.username };
+            console.log(`User ${username} has logged in successfully.`);
+
+            // Merge guest basket into the user's basket
+            const guestBasket = req.session.guestBasket || [];
+            if (guestBasket.length > 0) {
+                // Use Promise.all to ensure all items are merged before clearing guest basket
+                await Promise.all(
+                    guestBasket.map(item => {
+                        return new Promise((resolve, reject) => {
+                            db.query(
+                                'INSERT INTO basket (user_id, product_id, quantity) VALUES (?, ?, ?) ' +
+                                'ON DUPLICATE KEY UPDATE quantity = quantity + VALUES(quantity)',
+                                [user.id, item.productId, item.quantity],
+                                (err) => {
+                                    if (err) {
+                                        console.error(`Error merging item ${item.productId}:`, err);
+                                        reject(err);
+                                    } else {
+                                        resolve();
+                                    }
+                                }
+                            );
+                        });
+                    })
+                );
+                
+                req.session.guestBasket = []; // Clear guest basket after merging
+                console.log('Guest basket merged successfully.');
+            }
+
+            // Redirect to the basket page
+            res.redirect('/basket');
+        } catch (err) {
+            console.error('Error during login:', err);
+            res.status(500).send('Internal Server Error');
+        }
     });
 
     // Logout Route - Destroy the session and redirect to the login page

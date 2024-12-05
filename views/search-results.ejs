@@ -17,8 +17,9 @@
                 <ul>
                     <% results.forEach(product => { %>
                         <li>
-                            <h2><%= product.name %></h2>
-                            <p><%= product.description %></p>
+                            <a href="/product/<%= product.id %>">
+                                <h2><%= product.name %></h2>
+                            </a>
                             <p>Price: £<%= product.price.toFixed(2) %></p>
 
                             <!-- Add to Basket -->

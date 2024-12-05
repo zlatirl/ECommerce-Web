@@ -38,6 +38,31 @@ module.exports = (app, webData, db) => {
         );
     });
 
+    // Product Route
+    router.get('/product/:id', (req, res) => {
+        const productId = req.params.id;
+    
+        db.query(
+            'SELECT * FROM products WHERE id = ?',
+            [productId],
+            (err, results) => {
+                if (err) {
+                    console.error('Error fetching product:', err);
+                    return res.status(500).send('Internal Server Error');
+                }
+    
+                if (results.length === 0) {
+                    return res.status(404).send('Product not found');
+                }
+    
+                const product = results[0];
+                product.price = parseFloat(product.price);
+                res.render('product', { product });
+            }
+        );
+    });
+
+    // Basket Route
     router.get('/basket', (req, res) => {
         const userId = req.session.user?.id; // Check if the user is logged in
     
@@ -49,12 +74,18 @@ module.exports = (app, webData, db) => {
             const basketTotal = guestBasket.reduce((total, item) => total + (item.price * item.quantity), 0); 
     
             // Render the basket page for guests
-            return res.render('basket', { basketItems: guestBasket, basketTotal });
+            return res.render('basket', {
+                basketItems: guestBasket.map(item => ({
+                    ...item,
+                    productId: item.productId,
+                })),
+                basketTotal
+            });
         }
     
         // Handle logged-in user basket
         db.query(
-            `SELECT p.name, p.price, b.quantity
+            `SELECT p.name, p.price, b.quantity, b.product_id
              FROM basket b
              JOIN products p ON b.product_id = p.id
              WHERE b.user_id = ?`,
@@ -64,35 +95,36 @@ module.exports = (app, webData, db) => {
                     console.error('Error fetching basket:', err);
                     return res.status(500).send('Internal Server Error');
                 }
-    
+
                 // Convert the price to number for each item
                 const basketItems = results.map(item => ({
                     ...item,
+                    productId: item.product_id,
                     price: parseFloat(item.price), // Convert price to a number
                 }));
-    
+
                 // Calculate the total price of all items in the logged-in user's basket
                 const basketTotal = basketItems.reduce(
-                    (total, item) => total + (item.price * item.quantity),
+                    (total, item) => total + item.price * item.quantity,
                     0
                 );
-    
-                // Render the basket page for logged-in users
+
                 res.render('basket', { basketItems, basketTotal });
             }
         );
-    });    
+    });
 
+    // Basket Add
     router.post('/basket/add', (req, res) => {
         const { productId, quantity } = req.body;
         const userId = req.session.user?.id;
-    
+
         if (!userId) {
             // Handle guest users
             if (!req.session.guestBasket) {
                 req.session.guestBasket = []; // Initialize the guest basket if it doesn't exist
             }
-    
+
             // Fetch product details to include price
             db.query(
                 'SELECT name, price FROM products WHERE id = ?',
@@ -102,11 +134,11 @@ module.exports = (app, webData, db) => {
                         console.error('Error fetching product details for guest basket:', err);
                         return res.status(500).send('Internal Server Error');
                     }
-    
+
                     if (results.length === 0) {
                         return res.status(404).send('Product not found.');
                     }
-    
+
                     const product = results[0];
                     const existingItem = req.session.guestBasket.find(item => item.productId == productId);
     
@@ -128,8 +160,8 @@ module.exports = (app, webData, db) => {
             );
             return;
         }
-    
-        // Handle logged-in users (existing logic)
+        
+        // Handle logged-in users
         db.query(
             'SELECT * FROM basket WHERE user_id = ? AND product_id = ?',
             [userId, productId],
@@ -168,7 +200,109 @@ module.exports = (app, webData, db) => {
                 }
             }
         );
-    });    
-    
+    });
+
+    // Basket Quantity
+    router.post('/basket/update', (req, res) => {
+        const { productId, action } = req.body;
+        const userId = req.session.user?.id;
+
+        if (!userId) {
+            // Guest users
+            const guestBasket = req.session.guestBasket || [];
+            const item = guestBasket.find(i => i.productId == productId);
+
+            if (item) {
+                if (action === 'increase') {
+                    item.quantity += 1;
+                } else if (action === 'decrease') {
+                    item.quantity = Math.max(item.quantity - 1, 1);
+                }
+            }
+            return res.redirect('/basket');
+        }
+
+        // Logged-in users
+        const query = action === 'increase'
+            ? 'UPDATE basket SET quantity = quantity + 1 WHERE user_id = ? AND product_id = ?'
+            : 'UPDATE basket SET quantity = GREATEST(quantity - 1, 1) WHERE user_id = ? AND product_id = ?';
+
+        db.query(query, [userId, productId], (err) => {
+            if (err) {
+                console.error('Error updating basket quantity:', err);
+                return res.status(500).send('Internal Server Error');
+            }
+
+            // Fetch updated basket data
+            db.query(
+                `SELECT p.name, p.price, b.quantity, b.product_id
+                FROM basket b
+                JOIN products p ON b.product_id = p.id
+                WHERE b.user_id = ?`,
+                [userId],
+                (err, results) => {
+                    if (err) {
+                        console.error('Error fetching updated basket:', err);
+                        return res.status(500).send('Internal Server Error');
+                    }
+
+                    req.session.updatedBasket = results; // Cache updated basket for rendering
+                    res.redirect('/basket');
+                }
+            );
+        });
+    });
+
+    // Remove from Basket
+    router.post('/basket/remove', (req, res) => {
+        const { productId } = req.body;
+        const userId = req.session.user?.id;
+
+        if (!userId) {
+            // Guest users
+            req.session.guestBasket = (req.session.guestBasket || []).filter(
+                item => item.productId != productId
+            );
+            return res.redirect('/basket');
+        }
+
+        // Logged-in users
+        db.query(
+            'DELETE FROM basket WHERE user_id = ? AND product_id = ?',
+            [userId, productId],
+            (err) => {
+                if (err) {
+                    console.error('Error removing item from basket:', err);
+                    return res.status(500).send('Internal Server Error');
+                }
+
+                // Fetch updated basket data
+                db.query(
+                    `SELECT p.name, p.price, b.quantity, b.product_id
+                    FROM basket b
+                    JOIN products p ON b.product_id = p.id
+                    WHERE b.user_id = ?`,
+                    [userId],
+                    (err, results) => {
+                        if (err) {
+                            console.error('Error fetching updated basket:', err);
+                            return res.status(500).send('Internal Server Error');
+                        }
+
+                        req.session.updatedBasket = results; // Cache updated basket for rendering
+                        res.redirect('/basket');
+                    }
+                );
+            }
+        );
+    });
+
+    // Checkout Route
+    router.post('/checkout', (req, res) => {
+        if (!req.session.user) {
+            return res.redirect('/auth/login');
+        }
+    });
+
     return router;
 };

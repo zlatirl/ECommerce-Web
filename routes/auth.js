@@ -14,7 +14,7 @@ module.exports = (app, webData, db) => {
     router.post('/register', async (req, res) => {
         const { username, password, 'h-captcha-response': hCaptchaToken } = req.body;
     
-        const secretKey = '23865b08-02ac-4eb0-a868-c72cdf461e2c'; // Replace with your hCaptcha secret key
+        const secretKey = 'YOUR_SECRET_KEY'; // Replace with your hCaptcha secret key
     
         try {
             const response = await axios.post('https://hcaptcha.com/siteverify', null, {

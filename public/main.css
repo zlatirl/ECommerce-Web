@@ -16,6 +16,7 @@ footer {
     color: #f8f9fa; /* Light text color for better contrast */
     padding: 1rem 0;
     text-align: center;
+    margin-top: auto;
 }
 
 .fullscreen-center {
@@ -36,4 +37,23 @@ footer {
     background-color: #fff;
     border-radius: 8px;
     margin-top: -190px;
+}
+
+.error-page-center {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    height: 100vh; /* Full viewport height */
+    text-align: center;
+}
+
+.quantity-control {
+    display: flex;
+    align-items: center;
+}
+
+.product-buttons {
+    display: flex;
+    gap: 8px;
 }

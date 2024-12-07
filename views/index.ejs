@@ -32,7 +32,14 @@
                                 <div class="card-body">
                                     <h5 class="card-title"><%= product.name %></h5>
                                     <p class="card-text">£<%= product.price.toFixed(2) %></p>
-                                    <a href="/product/<%= product.id %>" class="btn btn-warning">View Product</a>
+                                    <!-- Add to Basket Button -->
+                                    <div class="product-buttons">
+                                        <form action="/basket/add" method="POST">
+                                            <input type="hidden" name="productId" value="<%= product.id %>">
+                                            <button type="submit" class="btn btn-warning">Add to Basket</button>
+                                        </form>
+                                        <a href="/product/<%= product.id %>" class="btn btn-warning">View Product</a>
+                                    </div>
                                 </div>
                             </div>
                         </div>

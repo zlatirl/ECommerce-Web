@@ -7,8 +7,6 @@ module.exports = (app, webData, db) => {
 
     // Password validation
     function validatePassword(password) {
-        const minLength = 6; // Password must be at least 6 characters
-        const passwordRegex = /^(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*])[A-Za-z\d!@#$%^&*]{6,}$/;
         if (password.length < 6) {
             return 'Password must be at least 6 characters long.';
         }

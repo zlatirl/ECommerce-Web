@@ -8,14 +8,20 @@ module.exports = (app, webData, db) => {
     // Password validation
     function validatePassword(password) {
         const minLength = 6; // Password must be at least 6 characters
-        const passwordRegex = /^(?=.*[A-Za-z])(?=.*\d).{6,}$/; // Example: At least one letter, one number, and min 6 characters.
-        if (password.length < minLength) {
+        const passwordRegex = /^(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*])[A-Za-z\d!@#$%^&*]{6,}$/;
+        if (password.length < 6) {
             return 'Password must be at least 6 characters long.';
         }
-        if (!passwordRegex.test(password)) {
-            return 'Password must contain at least one letter and one number.';
+        if (!/[A-Z]/.test(password)) {
+            return 'Password must include at least one uppercase letter.';
         }
-        return null;
+        if (!/\d/.test(password)) {
+            return 'Password must include at least one number.';
+        }
+        if (!/[!@#$%^&*]/.test(password)) {
+            return 'Password must include at least one special character (!@#$%^&*).';
+        }
+        return null; // No errors, password is valid
     }
 
     // Register Page

@@ -57,3 +57,10 @@ footer {
     display: flex;
     gap: 8px;
 }
+
+.basketSummary {
+    list-style-type: group;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}

@@ -17,6 +17,7 @@ module.exports = (app, webData, db) => {
         const secretKey = 'YOUR_SECRET_KEY'; // Replace with your hCaptcha secret key
     
         try {
+            // Verify hCaptcha token with the hCaptcha API
             const response = await axios.post('https://hcaptcha.com/siteverify', null, {
                 params: {
                     secret: secretKey,
@@ -27,7 +28,8 @@ module.exports = (app, webData, db) => {
             if (!response.data.success) {
                 return res.render('register', { webData, error: 'Failed to verify hCaptcha.' });
             }
-    
+            
+            // Checks if the username already exists
             db.query('SELECT * FROM users WHERE username = ?', [username], async (err, results) => {
                 if (err) {
                     console.error('Error checking for existing username:', err);
@@ -37,8 +39,9 @@ module.exports = (app, webData, db) => {
                 if (results.length > 0) {
                     return res.render('register', { webData, error: 'Username is already taken.' });
                 }
-    
+                
                 try {
+                    // Has the password before storing it
                     const hashedPassword = await bcrypt.hash(password, 10);
     
                     db.query(
@@ -51,7 +54,7 @@ module.exports = (app, webData, db) => {
                             }
     
                             console.log(`User ${username} has registered successfully.`);
-                            res.redirect('/auth/login');
+                            res.redirect('/auth/login'); // Redirect to the login page after registration
                         }
                     );
                 } catch (err) {
@@ -150,6 +153,86 @@ module.exports = (app, webData, db) => {
 
             res.redirect('/auth/login'); // Redirect to login page after logout
         });
+    });
+
+    // User Profile
+    router.get('/profile', (req, res) => {
+        if (!req.session.user) {
+            return res.redirect('/auth/login');
+        }
+    
+        const userId = req.session.user.id;
+        const successMessage = req.session.successMessage || null; // Get the success message
+        delete req.session.successMessage; // Clear the message after use
+    
+        db.query('SELECT username FROM users WHERE id = ?', [userId], (err, results) => {
+            if (err) {
+                console.error('Error fetching user details:', err);
+                return res.status(500).send('Internal Server Error');
+            }
+    
+            if (results.length === 0) {
+                return res.status(404).send('User not found');
+            }
+    
+            const user = results[0];
+            res.render('profile', { webData, user, error: null, success: successMessage });
+        });
+    });
+    
+    // Update User Details
+    router.post('/profile', async (req, res) => {
+        if (!req.session.user) {
+            return res.redirect('/auth/login');
+        }
+    
+        const { username, currentPassword, newPassword } = req.body;
+        const userId = req.session.user.id;
+    
+        try {
+            const userResults = await new Promise((resolve, reject) => {
+                db.query('SELECT * FROM users WHERE id = ?', [userId], (err, results) => {
+                    if (err) reject(err);
+                    resolve(results);
+                });
+            });
+    
+            if (userResults.length === 0) {
+                return res.status(404).send('User not found');
+            }
+    
+            const user = userResults[0];
+    
+            // Check current password
+            const isMatch = await bcrypt.compare(currentPassword, user.password);
+            if (!isMatch) {
+                return res.render('profile', { webData, user, error: 'Incorrect current password', success: null });
+            }
+    
+            // Hash the new password if provided
+            const hashedPassword = newPassword
+                ? await bcrypt.hash(newPassword, 10)
+                : user.password;
+    
+            // Update user details
+            db.query(
+                'UPDATE users SET username = ?, password = ? WHERE id = ?',
+                [username, hashedPassword, userId],
+                (err) => {
+                    if (err) {
+                        console.error('Error updating user:', err);
+                        return res.status(500).send('Internal Server Error');
+                    }
+    
+                    req.session.user.username = username; // Update session username
+                    req.session.successMessage = 'Profile updated successfully'; // Set success message
+                    res.redirect('/auth/profile'); // Redirect back to profile
+                }
+            );
+        } catch (err) {
+            console.error('Error updating profile:', err);
+            res.status(500).send('Internal Server Error');
+        }
     });
     
     return router;

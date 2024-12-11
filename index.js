@@ -46,6 +46,7 @@ const webData = { webName: "eCommerce Web" };
 // Routes
 app.use('/', require('./routes/main')(app, webData, db));
 app.use('/auth', require('./routes/auth')(app, webData, db));
+app.use('/api', require('./routes/apiRoutes')(db));
 
 // 404 - Page Not Found
 app.use((req, res) => {

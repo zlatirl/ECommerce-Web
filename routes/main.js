@@ -311,10 +311,91 @@ module.exports = (app, webData, db) => {
 
     // Checkout Route
     router.post('/checkout', (req, res) => {
-        if (!req.session.user) {
-            return res.redirect('/auth/login');
+        const userId = req.session.user?.id;
+
+        if (userId) {
+            // Logged-in user
+            db.query(
+                `SELECT p.name, p.price, b.quantity, b.product_id
+                 FROM basket b
+                 JOIN products p ON b.product_id = p.id
+                 WHERE b.user_id = ?`,
+                [userId],
+                (err, results) => {
+                    if (err) {
+                        console.error('Error fetching basket items for checkout:', err);
+                        return res.status(500).send('Internal Server Error');
+                    }
+    
+                    const basketItems = results.map(item => ({
+                        ...item,
+                        price: parseFloat(item.price),
+                    }));
+                    const basketTotal = basketItems.reduce(
+                        (total, item) => total + item.price * item.quantity,
+                        0
+                    );
+    
+                    res.render('checkout', { basketItems, basketTotal });
+                }
+            );
+        } else {
+            // Guest user
+            const basketItems = req.session.guestBasket || []; // Ensure basketItems is always an array
+            const basketTotal = basketItems.reduce(
+                (total, item) => total + item.price * item.quantity,
+                0
+            );
+    
+            res.render('checkout', { basketItems, basketTotal });
         }
     });
 
+    router.post('/checkout/submit', (req, res) => {
+        const { name, address, payment } = req.body;
+    
+        if (!name || !address || !payment) {
+            return res.status(400).send('Missing required fields.');
+        }
+    
+        // Safely retrieve the basket items
+        const basketItems = req.session.userBasket || req.session.guestBasket || [];
+        if (!Array.isArray(basketItems)) {
+            return res.status(500).send('Invalid basket format.');
+        }
+    
+        const basketTotal = basketItems.reduce(
+            (total, item) => total + (item.price * item.quantity || 0),
+            0
+        );
+    
+        // Insert order into the database
+        db.query(
+            'INSERT INTO `order` (user_id, name, address, payment_method, total_price) VALUES (?, ?, ?, ?, ?)',
+            [req.session.user?.id || null, name, address, payment, basketTotal],
+            (err, result) => {
+                if (err) {
+                    console.error('Error saving order:', err);
+                    return res.status(500).send('Internal Server Error');
+                }
+    
+                // Clear basket after order
+                if (req.session.user) {
+                    db.query('DELETE FROM basket WHERE user_id = ?', [req.session.user.id], (clearErr) => {
+                        if (clearErr) {
+                            console.error('Error clearing basket:', clearErr);
+                            return res.status(500).send('Internal Server Error');
+                        }
+                        req.session.userBasket = [];
+                        res.send('Order placed successfully!');
+                    });
+                } else {
+                    req.session.guestBasket = [];
+                    res.send('Order placed successfully!');
+                }
+            }
+        );
+    });
+    
     return router;
 };

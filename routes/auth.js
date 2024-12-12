@@ -28,63 +28,73 @@ module.exports = (app, webData, db) => {
     });
 
     // Register Page - Handle user registration
-    router.post('/register', async (req, res) => {
-        const { username, password, 'h-captcha-response': hCaptchaToken } = req.body;
+    router.post("/register", async (req, res) => {
+        const { username, password } = req.body;
 
-        const secretKey = 'ES_81f7fa790ab44c4b9c513fa2a44f777c'; // Replace with your hCaptcha secret key
+        const secretKey = "SECRET_KEY"; // Replace with your hCaptcha secret key
+        const hCaptchaToken = req.body['h-captcha-response'];
+
+        const url = "https://api.hcaptcha.com/siteverify";
+        const data = new URLSearchParams();
+        data.append("response", hCaptchaToken);
+        data.append("secret", secretKey);
 
         // Validate password
         const passwordError = validatePassword(password);
         if (passwordError) {
-            return res.render('register', { webData, error: passwordError });
+            return res.render("register", { webData, error: passwordError });
         }
 
         try {
             // Verify hCaptcha token
-            const response = await axios.post('https://hcaptcha.com/siteverify', null, {
-                params: {
-                    secret: secretKey,
-                    response: hCaptchaToken,
-                },
+            const fetchResponse = await fetch(url, {
+                method: "POST",
+                body: data,
             });
 
-            if (!response.data.success) {
-                console.log(response.data);
-                return res.render('register', { webData, error: 'Failed to verify hCaptcha.' });
-            }
+            const result = await fetchResponse.json();
+            console.log(result);
 
             // Check for existing username
-            db.query('SELECT * FROM users WHERE username = ?', [username], async (err, results) => {
-                if (err) {
-                    console.error('Error checking for existing username:', err);
-                    return res.status(500).send('Internal Server Error');
-                }
-
-                if (results.length > 0) {
-                    return res.render('register', { webData, error: 'Username is already taken.' });
-                }
-
-                // Hash and store the password
-                const hashedPassword = await bcrypt.hash(password, 10);
-                db.query(
-                    'INSERT INTO users (username, password) VALUES (?, ?)',
-                    [username, hashedPassword],
-                    (err) => {
-                        if (err) {
-                            console.error('Error inserting user:', err);
-                            return res.status(500).send('Internal Server Error');
-                        }
-                        console.log(`User ${username} registered successfully.`);
-                        res.redirect('https://doc.gold.ac.uk/usr/285/auth/login');
+            db.query(
+                "SELECT * FROM users WHERE username = ?",
+                [username],
+                async (err, results) => {
+                    if (err) {
+                        console.error("Error checking for existing username:", err);
+                        return res.status(500).send("Internal Server Error");
                     }
-                );
-            });
+
+                    if (results.length > 0) {
+                        return res.render("register", {
+                            webData,
+                            error: "Username is already taken.",
+                        });
+                    }
+
+                    // Hash and store the password
+                    const hashedPassword = await bcrypt.hash(password, 10);
+                    db.query(
+                        "INSERT INTO users (username, password) VALUES (?, ?)",
+                        [username, hashedPassword],
+                        (err) => {
+                            if (err) {
+                                console.error("Error inserting user:", err);
+                                return res.status(500).send("Internal Server Error");
+                            }
+                            console.log(`User ${username} registered successfully.`);
+                            res.redirect("https://doc.gold.ac.uk/usr/285/auth/login");
+                        }
+                    );
+                }
+            );
         } catch (err) {
-            console.error('Error verifying hCaptcha:', err);
-            res.status(500).send('Internal Server Error');
+            console.error("Error verifying hCaptcha:", err);
+            res.status(500).send("Internal Server Error");
         }
     });
-    
+
+
     // Login Page - Render the login page
     router.get('/login', (req, res) => {
         res.render('login', { webData, error: null }); // Add error to the render

@@ -167,7 +167,7 @@ module.exports = (app, webData, db) => {
                         });
                     }
     
-                    res.redirect('https://doc.gold.ac.uk/usr/285/basket'); // Redirect to the basket page
+                    res.redirect('/basket'); // Redirect to the basket page
                 }
             );
             return;
@@ -193,7 +193,7 @@ module.exports = (app, webData, db) => {
                                 console.error('Error updating basket:', err);
                                 return res.status(500).send('Internal Server Error');
                             }
-                            res.redirect('https://doc.gold.ac.uk/usr/285/basket');
+                            res.redirect('/basket');
                         }
                     );
                 } else {
@@ -206,7 +206,7 @@ module.exports = (app, webData, db) => {
                                 console.error('Error adding to basket:', err);
                                 return res.status(500).send('Internal Server Error');
                             }
-                            res.redirect('https://doc.gold.ac.uk/usr/285/basket');
+                            res.redirect('/basket');
                         }
                     );
                 }
@@ -231,7 +231,7 @@ module.exports = (app, webData, db) => {
                     item.quantity = Math.max(item.quantity - 1, 1);
                 }
             }
-            return res.redirect('https://doc.gold.ac.uk/usr/285/basket');
+            return res.redirect('/basket');
         }
 
         // Logged-in users
@@ -259,7 +259,7 @@ module.exports = (app, webData, db) => {
                     }
 
                     req.session.updatedBasket = results; // Cache updated basket for rendering
-                    res.redirect('https://doc.gold.ac.uk/usr/285/basket');
+                    res.redirect('/basket');
                 }
             );
         });
@@ -275,7 +275,7 @@ module.exports = (app, webData, db) => {
             req.session.guestBasket = (req.session.guestBasket || []).filter(
                 item => item.productId != productId
             );
-            return res.redirect('https://doc.gold.ac.uk/usr/285/basket');
+            return res.redirect('/basket');
         }
 
         // Logged-in users
@@ -302,7 +302,7 @@ module.exports = (app, webData, db) => {
                         }
 
                         req.session.updatedBasket = results; // Cache updated basket for rendering
-                        res.redirect('https://doc.gold.ac.uk/usr/285/basket');
+                        res.redirect('/basket');
                     }
                 );
             }

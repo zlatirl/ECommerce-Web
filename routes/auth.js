@@ -83,7 +83,7 @@ module.exports = (app, webData, db) => {
                                 return res.status(500).send("Internal Server Error");
                             }
                             console.log(`User ${username} registered successfully.`);
-                            res.redirect("https://doc.gold.ac.uk/usr/285/auth/login");
+                            res.redirect("/auth/login");
                         }
                     );
                 }
@@ -159,7 +159,7 @@ module.exports = (app, webData, db) => {
             }
 
             // Redirect to the basket page
-            res.redirect('https://doc.gold.ac.uk/usr/285/');
+            res.redirect('/');
         } catch (err) {
             console.error('Error during login:', err);
             res.status(500).send('Internal Server Error');
@@ -178,14 +178,14 @@ module.exports = (app, webData, db) => {
                 return res.status(500).send('Internal Server Error');
             }
 
-            res.redirect('https://doc.gold.ac.uk/usr/285/auth/login'); // Redirect to login page after logout
+            res.redirect('/auth/login'); // Redirect to login page after logout
         });
     });
 
     // User Profile
     router.get('/profile', (req, res) => {
         if (!req.session.user) {
-            return res.redirect('https://doc.gold.ac.uk/usr/285/auth/login');
+            return res.redirect('/auth/login');
         }
     
         const userId = req.session.user.id;
@@ -254,7 +254,7 @@ module.exports = (app, webData, db) => {
 
                     req.session.user.username = username; // Update session username
                     req.session.successMessage = 'Profile updated successfully'; // Set success message
-                    res.redirect('https://doc.gold.ac.uk/usr/285/auth/profile'); // Redirect back to profile
+                    res.redirect('/auth/profile'); // Redirect back to profile
                 }
             );
         } catch (err) {

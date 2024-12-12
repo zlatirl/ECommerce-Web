@@ -28,73 +28,63 @@ module.exports = (app, webData, db) => {
     });
 
     // Register Page - Handle user registration
-    router.post("/register", async (req, res) => {
-        const { username, password } = req.body;
+    router.post('/register', async (req, res) => {
+        const { username, password, 'h-captcha-response': hCaptchaToken } = req.body;
 
-        const secretKey = "SECRET_KEY"; // Replace with your hCaptcha secret key
-        const hCaptchaToken = req.body['h-captcha-response'];
-
-        const url = "https://api.hcaptcha.com/siteverify";
-        const data = new URLSearchParams();
-        data.append("response", hCaptchaToken);
-        data.append("secret", secretKey);
+        const secretKey = 'ES_81f7fa790ab44c4b9c513fa2a44f777c'; // Replace with your hCaptcha secret key
 
         // Validate password
         const passwordError = validatePassword(password);
         if (passwordError) {
-            return res.render("register", { webData, error: passwordError });
+            return res.render('register', { webData, error: passwordError });
         }
 
         try {
             // Verify hCaptcha token
-            const fetchResponse = await fetch(url, {
-                method: "POST",
-                body: data,
+            const response = await axios.post('https://hcaptcha.com/siteverify', null, {
+                params: {
+                    secret: secretKey,
+                    response: hCaptchaToken,
+                },
             });
 
-            const result = await fetchResponse.json();
-            console.log(result);
+            if (!response.data.success) {
+                console.log(response.data);
+                return res.render('register', { webData, error: 'Failed to verify hCaptcha.' });
+            }
 
             // Check for existing username
-            db.query(
-                "SELECT * FROM users WHERE username = ?",
-                [username],
-                async (err, results) => {
-                    if (err) {
-                        console.error("Error checking for existing username:", err);
-                        return res.status(500).send("Internal Server Error");
-                    }
-
-                    if (results.length > 0) {
-                        return res.render("register", {
-                            webData,
-                            error: "Username is already taken.",
-                        });
-                    }
-
-                    // Hash and store the password
-                    const hashedPassword = await bcrypt.hash(password, 10);
-                    db.query(
-                        "INSERT INTO users (username, password) VALUES (?, ?)",
-                        [username, hashedPassword],
-                        (err) => {
-                            if (err) {
-                                console.error("Error inserting user:", err);
-                                return res.status(500).send("Internal Server Error");
-                            }
-                            console.log(`User ${username} registered successfully.`);
-                            res.redirect("/auth/login");
-                        }
-                    );
+            db.query('SELECT * FROM users WHERE username = ?', [username], async (err, results) => {
+                if (err) {
+                    console.error('Error checking for existing username:', err);
+                    return res.status(500).send('Internal Server Error');
                 }
-            );
+
+                if (results.length > 0) {
+                    return res.render('register', { webData, error: 'Username is already taken.' });
+                }
+
+                // Hash and store the password
+                const hashedPassword = await bcrypt.hash(password, 10);
+                db.query(
+                    'INSERT INTO users (username, password) VALUES (?, ?)',
+                    [username, hashedPassword],
+                    (err) => {
+                        if (err) {
+                            console.error('Error inserting user:', err);
+                            return res.status(500).send('Internal Server Error');
+                        }
+                        console.log(`User ${username} registered successfully.`);
+                        res.redirect('https://doc.gold.ac.uk/usr/285/auth/login');
+                    }
+                );
+            });
         } catch (err) {
-            console.error("Error verifying hCaptcha:", err);
-            res.status(500).send("Internal Server Error");
+            console.error('Error verifying hCaptcha:', err);
+            res.status(500).send('Internal Server Error');
         }
     });
-
-
+    
     // Login Page - Render the login page
     router.get('/login', (req, res) => {
         res.render('login', { webData, error: null }); // Add error to the render
@@ -159,7 +149,7 @@ module.exports = (app, webData, db) => {
             }
 
             // Redirect to the basket page
-            res.redirect('/');
+            res.redirect('https://doc.gold.ac.uk/usr/285/');
         } catch (err) {
             console.error('Error during login:', err);
             res.status(500).send('Internal Server Error');
@@ -178,14 +168,14 @@ module.exports = (app, webData, db) => {
                 return res.status(500).send('Internal Server Error');
             }
 
-            res.redirect('/auth/login'); // Redirect to login page after logout
+            res.redirect('https://doc.gold.ac.uk/usr/285/auth/login'); // Redirect to login page after logout
         });
     });
 
     // User Profile
     router.get('/profile', (req, res) => {
         if (!req.session.user) {
-            return res.redirect('/auth/login');
+            return res.redirect('https://doc.gold.ac.uk/usr/285/auth/login');
         }
     
         const userId = req.session.user.id;
@@ -254,7 +244,7 @@ module.exports = (app, webData, db) => {
 
                     req.session.user.username = username; // Update session username
                     req.session.successMessage = 'Profile updated successfully'; // Set success message
-                    res.redirect('/auth/profile'); // Redirect back to profile
+                    res.redirect('https://doc.gold.ac.uk/usr/285/auth/profile'); // Redirect back to profile
                 }
             );
         } catch (err) {

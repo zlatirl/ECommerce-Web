@@ -6,7 +6,7 @@ const session = require('express-session');
 
 // Create the express application object
 const app = express();
-const PORT = process.env.PORT || 3000;
+const PORT = 8000;
 
 // Middleware
 app.set('view engine', 'ejs');
